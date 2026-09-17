@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nude For You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1b0e11;
+    --bg-deep: #120a0c;
+    --wine: #2c1216;
+    --wine-soft: #3a1a1f;
+    --ink: #f4e7d8;
+    --ink-dim: #d9c4ae;
+    --gold: #c9a24d;
+    --gold-soft: #e3c98a;
+    --rose: #a9585c;
+    --hair: rgba(201,162,77,0.28);
+  }
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg: #1b0e11;
+      --bg-deep: #120a0c;
+    }
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% 0%, var(--wine-soft) 0%, var(--bg) 55%, var(--bg-deep) 100%);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6vh 5vw;
+    font-family:'Cormorant Garamond', serif;
+    color:var(--ink);
+    overflow-x:hidden;
+  }
+
+  /* ambient flecks of gold light */
+  .ember{
+    position:fixed;
+    border-radius:50%;
+    background: radial-gradient(circle, var(--gold-soft) 0%, transparent 70%);
+    opacity:0.35;
+    filter: blur(1px);
+    pointer-events:none;
+    animation: drift 14s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ember{ animation: none; }
+  }
+  @keyframes drift{
+    0%,100%{ transform: translateY(0) translateX(0); opacity:0.2; }
+    50%{ transform: translateY(-18px) translateX(8px); opacity:0.5; }
+  }
+
+  /* ===== Envelope (closed state) ===== */
+  #envelope-stage{
+    position:relative;
+    width:min(420px, 88vw);
+    cursor:pointer;
+    user-select:none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  #envelope-stage.hidden{
+    opacity:0;
+    transform:scale(0.92);
+    pointer-events:none;
+    position:absolute;
+  }
+  .envelope{
+    position:relative;
+    width:100%;
+    aspect-ratio: 3 / 2;
+    background: linear-gradient(155deg, var(--wine-soft), var(--wine) 60%);
+    border:1px solid var(--hair);
+    border-radius:4px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,162,77,0.06) inset;
+    overflow:hidden;
+  }
+  .envelope::before{
+    /* bottom pocket triangle */
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:62%;
+    background: linear-gradient(155deg, var(--wine), var(--bg-deep));
+    clip-path: polygon(0 0, 50% 62%, 100% 0, 100% 100%, 0 100%);
+  }
+  .flap{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:62%;
+    background: linear-gradient(200deg, var(--wine-soft), var(--wine));
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transition: transform 0.9s cubic-bezier(.6,.05,.2,1);
+    border-bottom:1px solid var(--hair);
+    z-index:3;
+  }
+  #envelope-stage.open .flap{
+    transform: rotateX(180deg);
+  }
+  .seal{
+    position:absolute;
+    top:50%; left:50%;
+    width:56px; height:56px;
+    transform: translate(-50%,-50%);
+    z-index:5;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  #envelope-stage.open .seal{
+    opacity:0;
+    transform: translate(-50%,-50%) scale(0.6);
+  }
+  .envelope-label{
+    position:absolute;
+    bottom:14%;
+    left:0; right:0;
+    text-align:center;
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(1rem, 3.4vw, 1.35rem);
+    color: var(--gold-soft);
+    letter-spacing:0.02em;
+    z-index:1;
+  }
+  .hint{
+    text-align:center;
+    margin-top:22px;
+    font-size:0.95rem;
+    color:var(--ink-dim);
+    letter-spacing:0.04em;
+    opacity:0.75;
+  }
+
+  /* ===== Card (poem) ===== */
+  #card{
+    position:relative;
+    width:min(640px, 92vw);
+    max-height:86vh;
+    overflow-y:auto;
+    background: linear-gradient(180deg, rgba(44,18,22,0.9), rgba(18,10,12,0.94));
+    border:1px solid var(--hair);
+    border-radius:6px;
+    padding: clamp(2.2rem, 6vw, 4rem) clamp(1.6rem, 7vw, 4rem);
+    box-shadow: 0 40px 90px -30px rgba(0,0,0,0.7);
+    opacity:0;
+    transform: translateY(24px);
+    transition: opacity 1s ease 0.35s, transform 1s ease 0.35s;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold) transparent;
+  }
+  #card.visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+  #card::-webkit-scrollbar{ width:6px; }
+  #card::-webkit-scrollbar-thumb{ background: var(--hair); border-radius:3px; }
+
+  #card::before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border:1px solid var(--hair);
+    border-radius:3px;
+    pointer-events:none;
+  }
+
+  .title{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(2rem, 6vw, 2.9rem);
+    color:var(--gold-soft);
+    text-align:center;
+    margin:0 0 0.3em;
+    letter-spacing:0.01em;
+  }
+  .subtitle{
+    text-align:center;
+    font-size:0.95rem;
+    letter-spacing:0.14em;
+    color:var(--rose);
+    text-transform:uppercase;
+    margin-bottom:2.2em;
+    font-family:'Cormorant Garamond', serif;
+  }
+  .divider{
+    width:64px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 2.4em;
+  }
+
+  .poem{
+    font-size: clamp(1.08rem, 2.4vw, 1.3rem);
+    line-height:1.85;
+    color: var(--ink);
+  }
+  .poem p{
+    margin: 0 0 1.5em;
+    text-align:center;
+  }
+  .poem p.confession{
+    font-style:italic;
+    color: var(--ink-dim);
+    font-size:0.96em;
+    max-width: 44ch;
+    margin-left:auto;
+    margin-right:auto;
+    line-height:1.9;
+    padding: 0.4em 0;
+  }
+  .poem em{ color: var(--gold-soft); font-style:italic; }
+
+  .stanza-break{
+    width:36px;
+    height:1px;
+    background: var(--hair);
+    margin: 0.4em auto 2em;
+  }
+
+  .signoff{
+    margin-top: 2.6em;
+    text-align:center;
+  }
+  .signoff .wax{
+    width:34px; height:34px;
+    margin: 0 auto 1em;
+    opacity:0.85;
+  }
+  .signoff .line{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-size:1.35rem;
+    color: var(--gold-soft);
+  }
+  .signoff .sub{
+    margin-top:0.4em;
+    font-size:0.85rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--ink-dim);
+    opacity:0.7;
+  }
+
+  @media (max-width: 480px){
+    .poem p{ text-align:left; }
+    .poem p.confession{ max-width:none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="ember" style="width:140px;height:140px;top:12%;left:10%;"></div>
+  <div class="ember" style="width:100px;height:100px;top:70%;left:78%;animation-delay:3s;"></div>
+  <div class="ember" style="width:90px;height:90px;top:20%;left:82%;animation-delay:6s;"></div>
+
+  <div id="envelope-stage">
+    <div class="envelope">
+      <div class="flap"></div>
+      <div class="envelope-label">a confession, sealed</div>
+      <svg class="seal" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="28" cy="28" r="26" fill="#8a3236"/>
+        <circle cx="28" cy="28" r="26" fill="none" stroke="#c9a24d" stroke-width="1" opacity="0.6"/>
+        <path d="M28 16 C22 16 18 21 18 26 C18 31 22 34 28 40 C34 34 38 31 38 26 C38 21 34 16 28 16 Z"
+              fill="none" stroke="#e3c98a" stroke-width="1.6"/>
+      </svg>
+    </div>
+    <div class="hint">tap the seal to open</div>
+  </div>
+
+  <article id="card" aria-live="polite">
+    <h1 class="title">Nude For You</h1>
+    <div class="subtitle">a confession, for the day I was born and the day you found me</div>
+    <div class="divider"></div>
+
+    <div class="poem">
+      <p>Tonight the clock forgets to turn,<br>
+      tonight the candles wait to burn,<br>
+      tonight I do not wish for years —<br>
+      I wish to hand you all my fears.</p>
+
+      <p>So take me, love, before I speak,<br>
+      past strong, past sure, past brave, past sleek.<br>
+      Unmake the man the world has seen,<br>
+      and meet the one who's always been.</p>
+
+      <p>Take off the shirt of who I show,<br>
+      the practiced calm, the steady flow —<br>
+      beneath it beats a rawer thing,<br>
+      a storm that only you can bring.</p>
+
+      <p>Take off the zip of guarded pride,<br>
+      that kept my trembling hands to my side.<br>
+      I've worn control like second skin —<br>
+      tonight I let you wander in.</p>
+
+      <p>Pull off the ego, thread by thread,<br>
+      the crown I built, the lines I said,<br>
+      the man who conquered, closed, contained —<br>
+      strip him until just <em>I</em> remain.</p>
+
+      <div class="stanza-break"></div>
+
+      <p>Take my breath, still warm from your name,<br>
+      take every hush I couldn't claim,<br>
+      take the nights I lay awake<br>
+      just tracing shapes your absence makes.</p>
+
+      <p>Take my hands — they know your skin<br>
+      better than they know my sin.<br>
+      Take my mouth — it's learned to pray<br>
+      in every language your lips play.</p>
+
+      <p>Take my chest, where thunder hides,<br>
+      where longing rises with the tides,<br>
+      where every heartbeat, wild and bare,<br>
+      has always, only, called you there.</p>
+
+      <div class="stanza-break"></div>
+
+      <p class="confession">I have to tell you something true —
+      before you, I did not know I was cold
+      until I felt how warm your knowing was.
+      I did not know I'd been holding my breath
+      for years, quietly, politely, calling it fine,
+      until you said my name
+      and something in my chest finally exhaled.</p>
+
+      <p class="confession">You didn't just find me.
+      You found the parts I'd hidden even from prayer,
+      and you held them like they weren't too much,
+      like they were simply mine, simply human, simply worth keeping.
+      No one had ever done that before.
+      Not like this. Not so gently.</p>
+
+      <div class="stanza-break"></div>
+
+      <p>My secrets? Yours. I hide no more.<br>
+      My locks undone, my hinges, my whole floor<br>
+      laid open like a house in spring —<br>
+      come in, take everything.</p>
+
+      <p>Your wishes — I will wear like law.<br>
+      Your every whim, your slightest flaw,<br>
+      your midnight moods, your morning fire —<br>
+      I do not calm them. I require<br>
+      to <em>be</em> the thing that lets them burn,<br>
+      to be the door through which you turn<br>
+      when the world gets loud and cold and wrong —<br>
+      I want to be your only song.</p>
+
+      <p>Your desires, I don't just permit —<br>
+      I chase them down, I welcome it.<br>
+      Whatever hungers in your chest,<br>
+      let my whole self become its rest.</p>
+
+      <p>Take my past — the wars, the scars,<br>
+      the nights I built myself from shards.<br>
+      Take my future — still unwritten,<br>
+      save one line: that you're within it.</p>
+
+      <p>No mask, no armor, no disguise,<br>
+      just breath and pulse beneath your eyes.<br>
+      No walls to guard, no gates to climb —<br>
+      just skin, just soul, undone, sublime.</p>
+
+      <div class="stanza-break"></div>
+
+      <p class="confession">I am not always brave. I want you to know that.
+      Some days I flinch before I trust.
+      Some days the old fear still knocks on the door
+      and asks if it can stay.
+      But I let you in anyway — every time —
+      because loving you has taught me
+      that softness is not the opposite of strength.
+      It might be the truest form of it.</p>
+
+      <div class="stanza-break"></div>
+
+      <p>So take me whole — not part, not piece,<br>
+      take war-torn calm, take fierce release,<br>
+      take quiet nights and burning noon,<br>
+      take every version of me — soon,</p>
+
+      <p>and slower still, and closer yet,<br>
+      until there's nothing left to forget,<br>
+      until my name means only this:<br>
+      <em>hers</em> — in a breath, in a kiss.</p>
+
+      <p>This is no gift wrapped soft and neat.<br>
+      This is a man laid at your feet —<br>
+      not broken down, but broken <em>open</em>,<br>
+      every silence finally spoken.</p>
+
+      <p class="confession">And if you ever doubt how deep this runs —
+      remember this night, remember these words,
+      remember that on the one day meant for me,
+      I gave it to you instead,
+      because somewhere along the way,
+      you stopped being someone I love
+      and became the place I come home to.</p>
+
+      <p>So here I stand, no seams, no lock,<br>
+      undone by love, not by shock —<br>
+      bare to the bone, and still not through,<br>
+      forever, fully — <em>nude for you.</em></p>
+    </div>
+
+    <div class="signoff">
+      <svg class="wax" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="28" cy="28" r="26" fill="#8a3236"/>
+        <path d="M28 16 C22 16 18 21 18 26 C18 31 22 34 28 40 C34 34 38 31 38 26 C38 21 34 16 28 16 Z"
+              fill="none" stroke="#e3c98a" stroke-width="1.6"/>
+      </svg>
+      <div class="line">— all of me, unwrapped</div>
+      <div class="sub">happy birthday to me, because you're the reason I know what it means to be seen</div>
+    </div>
+  </article>
+
+<script>
+  const stage = document.getElementById('envelope-stage');
+  const card = document.getElementById('card');
+
+  function openEnvelope(){
+    stage.classList.add('open');
+    setTimeout(() => {
+      stage.classList.add('hidden');
+      card.classList.add('visible');
+    }, 650);
+  }
+
+  stage.addEventListener('click', openEnvelope);
+  stage.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openEnvelope(); }
+  });
+  stage.setAttribute('tabindex', '0');
+  stage.setAttribute('role', 'button');
+  stage.setAttribute('aria-label', 'Open envelope to reveal the poem');
+</script>
+
+</body>
+</html>
